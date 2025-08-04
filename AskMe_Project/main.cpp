@@ -247,11 +247,12 @@ public:
     bool deleted = false;
     int to_id{-1};
     int from_index_to_delete{-1};
-    for (auto question : users_from_questions_map[current_user_id]) {
+    for (const Question &question : users_from_questions_map[current_user_id]) {
       from_index_to_delete++;
       if (question.id == question_id) {
         deleted = true;
         to_id = question.to;
+        break;
       }
     }
 
@@ -260,12 +261,13 @@ public:
     } else {
       int to_index_to_delete = -1;
       deleted = false;
-      for (auto question : users_to_questions_map[to_id]) {
+      for (const Question *question : users_to_questions_map[to_id]) {
         to_index_to_delete++;
         if (question->id == question_id) {
           deleted = true;
           users_to_questions_map[to_id].erase(
               users_to_questions_map[to_id].begin() + to_index_to_delete);
+          break;
         }
       }
     }
@@ -307,7 +309,7 @@ public:
   ~questionBankDb() { update_db(); }
 
 private:
-  std::unordered_map<int, std::vector<Question>> users_from_questions_map;
+  std::unordered_map<int, std::deque<Question>> users_from_questions_map;
   std::unordered_map<int, std::vector<Question *>> users_to_questions_map;
   usersDb &users_db;
 };

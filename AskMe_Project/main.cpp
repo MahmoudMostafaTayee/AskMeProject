@@ -14,15 +14,49 @@ enum class Retval {
   EXIT_SIGNAL,
   LOGOUT_NEEDED,
 
+  INVALID_INPUT,
+
   MENU_INVALID_OPTION = 100,
   MENU_LOGIC_PASSWORD_MISMATCH,
 
   DB_USERS_ERROR_WRONG_CREDENTIALS = 200,
   DB_USERS_ERROR_USER_CREDENTIALS_NOT_FOUND,
+  DB_USERS_ERROR_USER_ID_NOT_FOUND,
   DB_ERROR_READING_DB,
   DB_ERROR_NONEXISTENT_ID,
 
 };
+
+class Utils {
+private:
+  Utils() {}
+
+public:
+  static Retval GetYOrNFromUser(bool &response);
+};
+Retval Utils::GetYOrNFromUser(bool &response) {
+  Retval retval{Retval::SUCCESS};
+  std::string input{};
+  std::getline(std::cin, input);
+  if (input.length() == 1) {
+    switch (input[0]) {
+    case 'y':
+    case 'Y':
+      response = true;
+      break;
+    case 'n':
+    case 'N':
+      response = false;
+      break;
+    default:
+      retval = Retval::INVALID_INPUT;
+      break;
+    }
+  } else {
+    retval = Retval::INVALID_INPUT;
+  }
+  return retval;
+}
 class Question;
 class User {
 public:
@@ -36,6 +70,7 @@ public:
 
 class Question {
 public:
+  static int next_id;
   int id;
   int unknown;
   int from;
@@ -46,10 +81,16 @@ public:
 
   friend std::ostream &operator<<(std::ostream &os, const Question &question);
 };
+int Question::next_id{1};
+
 std::ostream &operator<<(std::ostream &os, const Question &question) {
   os << "Questin ID: " << question.id << std::endl;
   os << "Question: " << question.question << std::endl;
   os << "Answer: " << question.answer << std::endl;
+  if (question.isAnonymous)
+    os << "Question directed to: " << "Anonymous user" << std::endl;
+  else
+    os << "Question directed to: " << question.to << std::endl;
   return os;
 }
 class usersDb {
@@ -138,6 +179,24 @@ public:
     return retval;
   }
 
+  Retval is_user_exist(int user_id) {
+    Retval retval{Retval::DB_USERS_ERROR_USER_ID_NOT_FOUND};
+    if (id_to_users.find(user_id) != id_to_users.end()) {
+      retval = Retval::SUCCESS;
+    }
+    return retval;
+  }
+
+  Retval is_anonymous_questions_allowed(int user_id, bool &is_allowed) {
+    Retval retval{Retval::DB_USERS_ERROR_USER_ID_NOT_FOUND};
+    retval = is_user_exist(user_id);
+    if (Retval::SUCCESS == retval) {
+      retval = Retval::SUCCESS;
+      is_allowed = id_to_users[user_id].isAnonymousAllowed;
+    }
+    return retval;
+  }
+
   ~usersDb() { update_db(); }
 
 private:
@@ -169,6 +228,9 @@ public:
 
       std::getline(line_stream, field, ',');
       question.id = std::stoi(field);
+      if (question.id > Question::next_id) {
+        Question::next_id = question.id + 1;
+      }
       std::getline(line_stream, field, ',');
       question.unknown = std::stoi(field);
       std::getline(line_stream, field, ',');
@@ -306,6 +368,14 @@ public:
     return retval;
   }
 
+  Retval add_question(Question &question) {
+    Retval retval = Retval::SUCCESS;
+    users_from_questions_map[question.from].push_back(std::move(question));
+    users_to_questions_map[question.to].push_back(
+        &users_from_questions_map[question.from].back());
+    return retval;
+  }
+
   ~questionBankDb() { update_db(); }
 
 private:
@@ -428,6 +498,11 @@ public:
           press_enter_to_continue();
           break;
         case '5':
+          retval = add_question();
+          if (retval != Retval::SUCCESS) {
+            std::cout << "Error happened while adding your question!"
+                      << std::endl;
+          }
           press_enter_to_continue();
           break;
         case '6':
@@ -450,6 +525,51 @@ public:
         }
       }
     } while (retval != Retval::LOGOUT_NEEDED && retval != Retval::EXIT_SIGNAL);
+    return retval;
+  }
+
+  Retval add_question() {
+    Retval retval = Retval::SUCCESS;
+    std::string field{};
+    Question question{};
+
+    std::cout << "Enter the User ID that you want to ask for: ";
+    std::getline(std::cin, field);
+    question.to = std::stoi(field);
+    retval = users_db.is_user_exist(question.to);
+    if (Retval::SUCCESS == retval) {
+      bool user_wants_anonymous{false};
+      bool isAnonymousAllowed{false};
+      do {
+
+        std::cout << "Do you want to ask this question anonymously(y/n)?"
+                  << std::endl;
+
+        retval = Utils::GetYOrNFromUser(user_wants_anonymous);
+      } while (retval != Retval::SUCCESS);
+      users_db.is_anonymous_questions_allowed(question.to,
+                                              isAnonymousAllowed);
+      if ((!user_wants_anonymous) || isAnonymousAllowed) {
+        std::cout << "Please enter the question: ";
+        std::getline(std::cin, question.question);
+        question.answer = NOT_ANSWERED_QUESTION;
+        question.id = Question::next_id++;
+        question.isAnonymous = user_wants_anonymous;
+        question.unknown = -1;
+        question.from = current_user_id;
+
+        question_bank.add_question(question);
+      } else {
+        std::cout<<user_wants_anonymous<<isAnonymousAllowed<<std::endl;
+        std::cout << "Sorry this user doesn't allow anonymous questions!"
+                  << std::endl;
+      }
+    } else {
+      std::cout
+          << "The user ID that you entered doesn't match any of the users."
+          << std::endl;
+    }
+
     return retval;
   }
 

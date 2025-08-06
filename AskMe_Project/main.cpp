@@ -67,12 +67,12 @@ public:
   std::string email{};
   bool isAnonymousAllowed{};
 
-  friend std::ostream& operator<<(std::ostream& os, User& user);
+  friend std::ostream &operator<<(std::ostream &os, User &user);
 };
-std::ostream& operator<<(std::ostream& os, User& user){
-  os<<"Name: "<<user.name<<std::endl;
-  os<<"Email: "<<user.email<<std::endl;
-  os<<"Id: "<<user.id<<std::endl;
+std::ostream &operator<<(std::ostream &os, User &user) {
+  os << "Name: " << user.name << std::endl;
+  os << "Email: " << user.email << std::endl;
+  os << "Id: " << user.id << std::endl;
   return os;
 }
 
@@ -205,13 +205,11 @@ public:
     return retval;
   }
 
-  Retval print_users(int current_user_id){
+  Retval print_users(int current_user_id) {
     Retval retval{Retval::SUCCESS};
-    for(auto id_to_user : id_to_users)
-    {
-      if(current_user_id != id_to_user.first)
-      {
-        std::cout<<id_to_user.second<<std::endl;
+    for (auto id_to_user : id_to_users) {
+      if (current_user_id != id_to_user.first) {
+        std::cout << id_to_user.second << std::endl;
       }
     }
     return retval;
@@ -526,10 +524,11 @@ public:
           press_enter_to_continue();
           break;
         case '6':
-        users_db.print_users(current_user_id);
+          users_db.print_users(current_user_id);
           press_enter_to_continue();
           break;
         case '7':
+          std::cout << "This feature is not available yet!" << std::endl;
           press_enter_to_continue();
           break;
         case '8':
@@ -540,7 +539,7 @@ public:
           retval = Retval::EXIT_SIGNAL;
           break;
         default:
-          std::cout << "Wrong choice, try again!"<<std::endl;
+          std::cout << "Wrong choice, try again!" << std::endl;
           retval = Retval::MENU_INVALID_OPTION;
           break;
         }
@@ -568,8 +567,7 @@ public:
 
         retval = Utils::GetYOrNFromUser(user_wants_anonymous);
       } while (retval != Retval::SUCCESS);
-      users_db.is_anonymous_questions_allowed(question.to,
-                                              isAnonymousAllowed);
+      users_db.is_anonymous_questions_allowed(question.to, isAnonymousAllowed);
       if ((!user_wants_anonymous) || isAnonymousAllowed) {
         std::cout << "Please enter the question: ";
         std::getline(std::cin, question.question);
@@ -581,7 +579,7 @@ public:
 
         question_bank.add_question(question);
       } else {
-        std::cout<<user_wants_anonymous<<isAnonymousAllowed<<std::endl;
+        std::cout << user_wants_anonymous << isAnonymousAllowed << std::endl;
         std::cout << "Sorry this user doesn't allow anonymous questions!"
                   << std::endl;
       }

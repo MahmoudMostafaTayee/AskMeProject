@@ -66,7 +66,15 @@ public:
   std::string password{};
   std::string email{};
   bool isAnonymousAllowed{};
+
+  friend std::ostream& operator<<(std::ostream& os, User& user);
 };
+std::ostream& operator<<(std::ostream& os, User& user){
+  os<<"Name: "<<user.name<<std::endl;
+  os<<"Email: "<<user.email<<std::endl;
+  os<<"Id: "<<user.id<<std::endl;
+  return os;
+}
 
 class Question {
 public:
@@ -193,6 +201,18 @@ public:
     if (Retval::SUCCESS == retval) {
       retval = Retval::SUCCESS;
       is_allowed = id_to_users[user_id].isAnonymousAllowed;
+    }
+    return retval;
+  }
+
+  Retval print_users(int current_user_id){
+    Retval retval{Retval::SUCCESS};
+    for(auto id_to_user : id_to_users)
+    {
+      if(current_user_id != id_to_user.first)
+      {
+        std::cout<<id_to_user.second<<std::endl;
+      }
     }
     return retval;
   }
@@ -506,6 +526,7 @@ public:
           press_enter_to_continue();
           break;
         case '6':
+        users_db.print_users(current_user_id);
           press_enter_to_continue();
           break;
         case '7':
@@ -519,7 +540,7 @@ public:
           retval = Retval::EXIT_SIGNAL;
           break;
         default:
-          std::cout << "Wrong choice, try again!";
+          std::cout << "Wrong choice, try again!"<<std::endl;
           retval = Retval::MENU_INVALID_OPTION;
           break;
         }

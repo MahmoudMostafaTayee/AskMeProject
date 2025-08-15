@@ -7,10 +7,11 @@
 #include <unordered_map>
 #include <vector>
 
-#define NOT_ANSWERED_QUESTION "Question Not Answered yet!"
+inline constexpr char NOT_ANSWERED_QUESTION[] = "Question Not Answered yet!";
+
 enum class Retval {
   SUCCESS = 0,
-  INVLAID_STATE,
+  INVALID_STATE,
   EXIT_SIGNAL,
   LOGOUT_NEEDED,
 
@@ -283,7 +284,7 @@ public:
   }
 
   Retval print_to_questions(int user_id) {
-    Retval retval{Retval::INVLAID_STATE};
+    Retval retval{Retval::INVALID_STATE};
     if (users_to_questions_map.find(user_id) != users_to_questions_map.end()) {
       for (auto question : users_to_questions_map[user_id]) {
         std::cout << *question << std::endl;

@@ -27,8 +27,10 @@ public:
   Retval read_questions_db();
   Retval print_from_questions(int user_id);
   Retval print_to_questions(int user_id);
-  Retval get_question_answer(int current_user_id, int question_id, std::string &answer);
-  Retval update_answer(int current_user_id, int question_id, std::string new_answer);
+  Retval get_question_answer(int current_user_id, int question_id,
+                             std::string &answer);
+  Retval update_answer(int current_user_id, int question_id,
+                       std::string new_answer);
   Retval delete_question(int current_user_id, int question_id);
   Retval update_db();
   Retval add_question(Question &question);

@@ -12,7 +12,8 @@ std::ostream &operator<<(std::ostream &os, User &user) {
 
 usersDbCsv::usersDbCsv() { read_users_data(); }
 
-Retval usersDbCsv::verify_credentials(std::string username, std::string password) {
+Retval usersDbCsv::verify_credentials(std::string username,
+                                      std::string password) {
   Retval retval = Retval::DB_USERS_ERROR_WRONG_CREDENTIALS;
   if (username_to_users.find(username) != username_to_users.end()) {
     if (username_to_users[username]->password == password) {
@@ -102,7 +103,8 @@ Retval usersDbCsv::is_user_exist(int user_id) {
   return retval;
 }
 
-Retval usersDbCsv::is_anonymous_questions_allowed(int user_id, bool &is_allowed) {
+Retval usersDbCsv::is_anonymous_questions_allowed(int user_id,
+                                                  bool &is_allowed) {
   Retval retval{Retval::DB_USERS_ERROR_USER_ID_NOT_FOUND};
   retval = is_user_exist(user_id);
   if (Retval::SUCCESS == retval) {

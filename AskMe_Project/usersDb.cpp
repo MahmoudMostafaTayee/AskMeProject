@@ -10,18 +10,23 @@ std::ostream &operator<<(std::ostream &os, User &user) {
   return os;
 }
 
-usersDbCsv::usersDbCsv() { read_users_data(); }
+usersDbCsv::usersDbCsv() {}
 
 Retval usersDbCsv::verify_credentials(std::string username,
                                       std::string password) {
   Retval retval = Retval::DB_USERS_ERROR_WRONG_CREDENTIALS;
-  if (username_to_users.find(username) != username_to_users.end()) {
-    if (username_to_users[username]->password == password) {
-      retval = Retval::SUCCESS;
+  if(is_data_read){
+    if (username_to_users.find(username) != username_to_users.end()) {
+      if (username_to_users[username]->password == password) {
+        retval = Retval::SUCCESS;
+      }
+    } else {
+      retval = Retval::DB_USERS_ERROR_USER_CREDENTIALS_NOT_FOUND;
     }
-  } else {
-    retval = Retval::DB_USERS_ERROR_USER_CREDENTIALS_NOT_FOUND;
   }
+  else{
+    retval = Retval::DB_ERROR_DATA_NOT_READ_YET;
+  }                              
   return retval;
 }
 
@@ -57,6 +62,7 @@ Retval usersDbCsv::read_users_data() {
     }
 
     fin.close();
+    is_data_read = true;
   } else {
     retval = Retval::DB_ERROR_READING_DB;
   }
@@ -64,64 +70,93 @@ Retval usersDbCsv::read_users_data() {
   return retval;
 }
 
-int usersDbCsv::get_user_id(std::string user_name) {
-  int user_id = -1;
-
-  if (username_to_users.find(user_name) != username_to_users.end()) {
-    user_id = username_to_users[user_name]->id;
+Retval usersDbCsv::get_user_id(std::string user_name, int& user_id) {
+  Retval retval{Retval::SUCCESS};
+  user_id = -1;
+  if(is_data_read){
+    if (username_to_users.find(user_name) != username_to_users.end()) {
+      user_id = username_to_users[user_name]->id;
+    }
   }
-
-  return user_id;
+  return retval;
 }
 
-void usersDbCsv::add_new_user(User &new_user) {
-  max_id++;
-  id_to_users[max_id] = new_user;
-  username_to_users[new_user.user_name] = &id_to_users[max_id];
+Retval usersDbCsv::add_new_user(User &new_user) {
+  Retval retval{Retval::SUCCESS};
+  if(is_data_read){
+    max_id++;
+    id_to_users[max_id] = new_user;
+    username_to_users[new_user.user_name] = &id_to_users[max_id];
+    update_db();
+  }
+  else{
+    retval = Retval::DB_ERROR_DATA_NOT_READ_YET;
+  }
+  return retval;
 }
 
 Retval usersDbCsv::update_db() {
   Retval retval{Retval::SUCCESS};
-  std::ofstream fout("users.csv");
-  for (auto element : id_to_users) {
-    fout << element.second.id << ',';
-    fout << element.second.user_name << ',';
-    fout << element.second.password << ',';
-    fout << element.second.name << ',';
-    fout << element.second.email << ',';
-    fout << (element.second.isAnonymousAllowed ? 1 : 0) << '\n';
+  if(is_data_read){
+    std::ofstream fout("users.csv");
+    for (auto element : id_to_users) {
+      fout << element.second.id << ',';
+      fout << element.second.user_name << ',';
+      fout << element.second.password << ',';
+      fout << element.second.name << ',';
+      fout << element.second.email << ',';
+      fout << (element.second.isAnonymousAllowed ? 1 : 0) << '\n';
+    }
+    fout.close();
   }
-  fout.close();
+  else{
+    retval = Retval::DB_ERROR_DATA_NOT_READ_YET;
+  }     
   return retval;
 }
 
 Retval usersDbCsv::is_user_exist(int user_id) {
   Retval retval{Retval::DB_USERS_ERROR_USER_ID_NOT_FOUND};
-  if (id_to_users.find(user_id) != id_to_users.end()) {
-    retval = Retval::SUCCESS;
+  if(is_data_read){
+    if (id_to_users.find(user_id) != id_to_users.end()) {
+      retval = Retval::SUCCESS;
+    }
   }
+  else{
+    retval = Retval::DB_ERROR_DATA_NOT_READ_YET;
+  }     
   return retval;
 }
 
 Retval usersDbCsv::is_anonymous_questions_allowed(int user_id,
                                                   bool &is_allowed) {
   Retval retval{Retval::DB_USERS_ERROR_USER_ID_NOT_FOUND};
-  retval = is_user_exist(user_id);
-  if (Retval::SUCCESS == retval) {
-    retval = Retval::SUCCESS;
-    is_allowed = id_to_users[user_id].isAnonymousAllowed;
+  if(is_data_read){
+    retval = is_user_exist(user_id);
+    if (Retval::SUCCESS == retval) {
+      retval = Retval::SUCCESS;
+      is_allowed = id_to_users[user_id].isAnonymousAllowed;
+    }
   }
+  else{
+    retval = Retval::DB_ERROR_DATA_NOT_READ_YET;
+  }     
   return retval;
 }
 
 Retval usersDbCsv::print_users(int current_user_id) {
   Retval retval{Retval::SUCCESS};
-  for (auto id_to_user : id_to_users) {
-    if (current_user_id != id_to_user.first) {
-      std::cout << id_to_user.second << std::endl;
+  if(is_data_read){
+    for (auto id_to_user : id_to_users) {
+      if (current_user_id != id_to_user.first) {
+        std::cout << id_to_user.second << std::endl;
+      }
     }
   }
+  else{
+    retval = Retval::DB_ERROR_DATA_NOT_READ_YET;
+  }     
   return retval;
 }
 
-usersDbCsv::~usersDbCsv() { update_db(); }
+usersDbCsv::~usersDbCsv() {}

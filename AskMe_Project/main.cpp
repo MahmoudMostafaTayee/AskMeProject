@@ -24,7 +24,7 @@ public:
           retval = login_handler();
           break;
         case '2':
-          signup_handler();
+          retval = signup_handler();
           break;
         default:
           std::cout << "Wrong choice, try again!";
@@ -58,15 +58,18 @@ public:
     } else if (Retval::DB_USERS_ERROR_USER_CREDENTIALS_NOT_FOUND == retval) {
       std::cout << "Invalide credentials!" << std::endl;
     } else if (Retval::SUCCESS == retval) {
-      current_user_id = users_db.get_user_id(username);
-      std::cout << "current_user_id: " << current_user_id << std::endl;
-      retval = internal_menu_handler();
+      retval = users_db.get_user_id(username, current_user_id);
+      if(Retval::SUCCESS == retval){
+        std::cout << "current_user_id: " << current_user_id << std::endl;
+        retval = internal_menu_handler();
+      }
     }
 
     return retval;
   }
 
-  void signup_handler() {
+  Retval signup_handler() {
+    Retval retval{Retval::SUCCESS};
     User user{};
     std::cout << "Enter Email: ";
     std::getline(std::cin, user.email);
@@ -76,7 +79,8 @@ public:
     std::getline(std::cin, user.password);
     std::cout << "Enter user name: ";
     std::getline(std::cin, user.user_name);
-    users_db.add_new_user(user);
+    retval = users_db.add_new_user(user);
+    return retval;
   }
 
   Retval password_checker(std::string password, std::string confirm_password) {
@@ -321,6 +325,7 @@ public:
     std::cout << "#############################################################"
                  "####\n";
     usersDbCsv users_db{};
+    users_db.read_users_data();
     questionBankDb question_bank{users_db};
     Menu menu{users_db, question_bank};
     menu.run_main_menu();

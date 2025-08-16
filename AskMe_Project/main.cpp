@@ -6,7 +6,7 @@
 
 class Menu {
 public:
-  Menu(usersDb &users_db, questionBankDb &question_bank)
+  Menu(usersDbCsv &users_db, questionBankDb &question_bank)
       : users_db(users_db), question_bank(question_bank) {}
   void run_main_menu() {
     Retval retval{Retval::MENU_INVALID_OPTION};
@@ -286,7 +286,7 @@ public:
   }
 
 private:
-  usersDb &users_db;
+  usersDbCsv &users_db;
   questionBankDb &question_bank;
   int current_user_id{-1};
   std::string login_signup_main_menu{""
@@ -320,7 +320,7 @@ public:
                  "#########################\n";
     std::cout << "#############################################################"
                  "####\n";
-    usersDb users_db{};
+    usersDbCsv users_db{};
     questionBankDb question_bank{users_db};
     Menu menu{users_db, question_bank};
     menu.run_main_menu();

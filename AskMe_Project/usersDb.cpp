@@ -10,9 +10,9 @@ std::ostream &operator<<(std::ostream &os, User &user) {
   return os;
 }
 
-usersDb::usersDb() { read_users_data(); }
+usersDbCsv::usersDbCsv() { read_users_data(); }
 
-Retval usersDb::verify_credentials(std::string username, std::string password) {
+Retval usersDbCsv::verify_credentials(std::string username, std::string password) {
   Retval retval = Retval::DB_USERS_ERROR_WRONG_CREDENTIALS;
   if (username_to_users.find(username) != username_to_users.end()) {
     if (username_to_users[username]->password == password) {
@@ -24,7 +24,7 @@ Retval usersDb::verify_credentials(std::string username, std::string password) {
   return retval;
 }
 
-Retval usersDb::read_users_data() {
+Retval usersDbCsv::read_users_data() {
   Retval retval = Retval::SUCCESS;
   std::string line{};
   std::ifstream fin{"users.csv"};
@@ -63,7 +63,7 @@ Retval usersDb::read_users_data() {
   return retval;
 }
 
-int usersDb::get_user_id(std::string user_name) {
+int usersDbCsv::get_user_id(std::string user_name) {
   int user_id = -1;
 
   if (username_to_users.find(user_name) != username_to_users.end()) {
@@ -73,13 +73,13 @@ int usersDb::get_user_id(std::string user_name) {
   return user_id;
 }
 
-void usersDb::add_new_user(User &new_user) {
+void usersDbCsv::add_new_user(User &new_user) {
   max_id++;
   id_to_users[max_id] = new_user;
   username_to_users[new_user.user_name] = &id_to_users[max_id];
 }
 
-Retval usersDb::update_db() {
+Retval usersDbCsv::update_db() {
   Retval retval{Retval::SUCCESS};
   std::ofstream fout("users.csv");
   for (auto element : id_to_users) {
@@ -94,7 +94,7 @@ Retval usersDb::update_db() {
   return retval;
 }
 
-Retval usersDb::is_user_exist(int user_id) {
+Retval usersDbCsv::is_user_exist(int user_id) {
   Retval retval{Retval::DB_USERS_ERROR_USER_ID_NOT_FOUND};
   if (id_to_users.find(user_id) != id_to_users.end()) {
     retval = Retval::SUCCESS;
@@ -102,7 +102,7 @@ Retval usersDb::is_user_exist(int user_id) {
   return retval;
 }
 
-Retval usersDb::is_anonymous_questions_allowed(int user_id, bool &is_allowed) {
+Retval usersDbCsv::is_anonymous_questions_allowed(int user_id, bool &is_allowed) {
   Retval retval{Retval::DB_USERS_ERROR_USER_ID_NOT_FOUND};
   retval = is_user_exist(user_id);
   if (Retval::SUCCESS == retval) {
@@ -112,7 +112,7 @@ Retval usersDb::is_anonymous_questions_allowed(int user_id, bool &is_allowed) {
   return retval;
 }
 
-Retval usersDb::print_users(int current_user_id) {
+Retval usersDbCsv::print_users(int current_user_id) {
   Retval retval{Retval::SUCCESS};
   for (auto id_to_user : id_to_users) {
     if (current_user_id != id_to_user.first) {
@@ -122,4 +122,4 @@ Retval usersDb::print_users(int current_user_id) {
   return retval;
 }
 
-usersDb::~usersDb() { update_db(); }
+usersDbCsv::~usersDbCsv() { update_db(); }
